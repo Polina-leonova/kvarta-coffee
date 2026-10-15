@@ -14,11 +14,11 @@ export default function Home() {
   const [selectedInterest, setSelectedInterest] = useState<string>("single");
 
   const handleSelectProduct = (productName: string) => {
-    setSelectedInterest(`single: ${productName}`);
+    setSelectedInterest(`single: ${productName}#${Date.now()}`);
   };
 
   const handleSelectSubscription = () => {
-    setSelectedInterest("subscription");
+    setSelectedInterest(`subscription#${Date.now()}`);
   };
 
   return (

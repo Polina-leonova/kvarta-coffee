@@ -144,12 +144,12 @@ export default function Catalog({ onSelectProduct }: CatalogProps) {
                 </div>
 
                 <a
-                  href="#order"
-                  onClick={() => onSelectProduct?.(item.name)}
-                  className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 active:scale-95 transition-all"
+                href="#order"
+                onClick={() => onSelectProduct?.(item.name)}
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-full bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 active:scale-95 transition-all"
                 >
-                  Заказать
-                  <ArrowRight className="w-3 h-3" />
+                Заказать
+                <ArrowRight className="w-3 h-3" />
                 </a>
               </div>
             </div>

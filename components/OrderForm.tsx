@@ -2,18 +2,37 @@
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { getUtmParams, UtmParams } from "../lib/utm";
-import { CheckCircle2, AlertCircle, Loader2, Send } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Send, Plus, Minus, Coffee, Sparkles } from "lucide-react";
 
 interface OrderFormProps {
   initialInterest?: string;
 }
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  weight: string;
+  count: number;
+}
+
+const AVAILABLE_ITEMS: Omit<CartItem, "count">[] = [
+  { id: "ethiopia", name: "Эфиопия Иргачеффе", price: 32, weight: "250 г" },
+  { id: "colombia", name: "Колумбия Уила", price: 29, weight: "250 г" },
+  { id: "brazil", name: "Бразилия Серрадо", price: 26, weight: "250 г" },
+  { id: "drips", name: "Дрип-пакеты (Ассорти)", price: 18, weight: "10 шт" },
+];
+
 export default function OrderForm({ initialInterest = "single" }: OrderFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+375 ");
-  const [interest, setInterest] = useState(initialInterest);
+  const [interestType, setInterestType] = useState<"single" | "subscription" | "question">("single");
   const [comment, setComment] = useState("");
   const [utm, setUtm] = useState<UtmParams>({});
+
+  const [items, setItems] = useState<CartItem[]>(
+    AVAILABLE_ITEMS.map((item) => ({ ...item, count: 0 }))
+  );
 
   const [phoneError, setPhoneError] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -22,99 +41,99 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const cursorRef = useRef<number | null>(null);
 
-  // Подхватываем UTM метки
   useEffect(() => {
     setUtm(getUtmParams());
   }, []);
 
   useEffect(() => {
-    if (initialInterest) {
-      setInterest(initialInterest);
+    if (!initialInterest) return;
+
+    const cleanInterest = initialInterest.split("#")[0];
+
+    if (cleanInterest === "subscription") {
+      setInterestType("subscription");
+    } else if (cleanInterest.startsWith("single:")) {
+      setInterestType("single");
+      const productName = cleanInterest.replace("single: ", "").trim();
+
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.name === productName) {
+            return { ...item, count: item.count > 0 ? item.count : 1 };
+          }
+          return item;
+        })
+      );
     }
   }, [initialInterest]);
 
-  // Восстанавливаем позицию курсора сразу после обновления DOM
+  const updateCount = (id: string, delta: number) => {
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          const newCount = Math.max(0, item.count + delta);
+          return { ...item, count: newCount };
+        }
+        return item;
+      })
+    );
+  };
+
+  const totalCount = items.reduce((sum, i) => sum + i.count, 0);
+  const totalPrice = items.reduce((sum, i) => sum + i.count * i.price, 0);
+
   useLayoutEffect(() => {
     if (phoneInputRef.current && cursorRef.current !== null) {
       phoneInputRef.current.setSelectionRange(cursorRef.current, cursorRef.current);
     }
   }, [phone]);
 
-  // Форматирование по маске +375 (XX) XXX-XX-XX
-  const formatPhone = (rawDigits: string): string => {
-    let clean = rawDigits;
-    if (clean.startsWith("375")) {
-      clean = clean.slice(3);
-    }
-    clean = clean.slice(0, 9); // максимум 9 цифр после кода
+  const formatPhone = (digits: string): string => {
+    let clean = digits.startsWith("375") ? digits.slice(3) : digits;
+    clean = clean.slice(0, 9);
 
     let res = "+375";
-    if (clean.length > 0) {
-      res += " (" + clean.slice(0, 2);
-    }
-    if (clean.length >= 2) {
-      res += ") " + clean.slice(2, 5);
-    }
-    if (clean.length >= 5) {
-      res += "-" + clean.slice(5, 7);
-    }
-    if (clean.length >= 7) {
-      res += "-" + clean.slice(7, 9);
-    }
+    if (clean.length > 0) res += " (" + clean.slice(0, 2);
+    if (clean.length >= 2) res += ") " + clean.slice(2, 5);
+    if (clean.length >= 5) res += "-" + clean.slice(5, 7);
+    if (clean.length >= 7) res += "-" + clean.slice(7, 9);
     return res;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
-    const oldVal = phone;
     const newVal = input.value;
     const currentCursor = input.selectionStart || 0;
 
-    // Считаем, сколько цифр было ДО курсора
     const digitsBeforeCursor = newVal.slice(0, currentCursor).replace(/\D/g, "").length;
-
-    // Вытаскиваем все цифры
     const allDigits = newVal.replace(/\D/g, "");
 
-    // Если попытались стереть код страны +375
-    if (!allDigits.startsWith("375") && allDigits.length > 0) {
-      return;
-    }
+    if (!allDigits.startsWith("375") && allDigits.length > 0) return;
 
     const formatted = formatPhone(allDigits);
     setPhone(formatted);
 
-    // Вычисляем новую позицию курсора на основе количества цифр
     let newCursorPos = 0;
     let countedDigits = 0;
     for (let i = 0; i < formatted.length; i++) {
-      if (/\d/.test(formatted[i])) {
-        countedDigits++;
-      }
+      if (/\d/.test(formatted[i])) countedDigits++;
       if (countedDigits >= digitsBeforeCursor) {
         newCursorPos = i + 1;
         break;
       }
     }
-
-    // Если курсор пытается залезть внутрь "+375 "
-    if (newCursorPos < 5) {
-      newCursorPos = 5;
-    }
+    if (newCursorPos < 5) newCursorPos = 5;
 
     cursorRef.current = newCursorPos;
     validatePhone(formatted);
   };
 
-  // Валидация белорусского номера
   const validatePhone = (value: string): boolean => {
     const digits = value.replace(/\D/g, "");
-
     if (digits.length < 12) {
-      setPhoneError("Номер неполный. Введите 9 цифр (например, +375 (29) 123-45-67)");
+      setPhoneError("Номер неполный. Введите 9 цифр после +375.");
       return false;
     }
-
     const operator = digits.slice(3, 5);
     const validOperators = ["29", "33", "44", "25", "17"];
 
@@ -122,7 +141,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
       setPhoneError("Неверный код оператора. Допустимы: 29, 33, 44, 25 или 17.");
       return false;
     }
-
     setPhoneError("");
     return true;
   };
@@ -135,12 +153,28 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
       return;
     }
 
-    if (!validatePhone(phone)) {
+    if (!validatePhone(phone)) return;
+
+    if (interestType === "single" && totalCount === 0) {
+      alert("Пожалуйста, выберите хотя бы одну пачку кофе кнопкой «+»");
       return;
     }
 
     setStatus("loading");
     setErrorMessage("");
+
+    let orderSummary = "";
+    if (interestType === "single") {
+      const selectedList = items
+        .filter((i) => i.count > 0)
+        .map((i) => `${i.name} (${i.count} шт.)`)
+        .join(", ");
+      orderSummary = `Разовый заказ: ${selectedList}. Итого: ${totalPrice} BYN`;
+    } else if (interestType === "subscription") {
+      orderSummary = "Подписка на кофе: 2 пачки в месяц (54 BYN/мес)";
+    } else {
+      orderSummary = "Вопрос / Консультация по зерну";
+    }
 
     try {
       const response = await fetch("/api/lead", {
@@ -149,7 +183,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
-          interest,
+          interest: orderSummary,
           comment: comment.trim(),
           utm,
         }),
@@ -165,7 +199,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
     } catch (err: any) {
       setStatus("error");
       setErrorMessage(
-        err.message || "Сервер временно недоступен. Свяжитесь с нами напрямую по телефону или в Telegram."
+        err.message || "Сервер временно недоступен. Свяжитесь с нами напрямую по телефону."
       );
     }
   };
@@ -173,8 +207,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
   return (
     <section id="order" className="py-16 sm:py-24 bg-[#F4EFE6]/50">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
-        
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-stone-200/90 shadow-lg">
+        <div className="bg-white rounded-3xl p-6 sm:p-12 border border-stone-200/90 shadow-lg">
           
           {status === "success" ? (
             <div className="text-center py-8">
@@ -185,7 +218,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                 Заявка принята!
               </h3>
               <p className="mt-3 text-stone-600 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-                Спасибо, {name}! Мы перезвоним вам в течение часа в рабочее время (8:00–20:00), чтобы подтвердить заказ и адрес доставки.
+                Спасибо, {name}! Мы перезвоним вам в течение часа в рабочее время (8:00–20:00), чтобы согласовать детали доставки.
               </p>
               <button
                 type="button"
@@ -194,15 +227,16 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                   setName("");
                   setPhone("+375 ");
                   setComment("");
+                  setItems(AVAILABLE_ITEMS.map((item) => ({ ...item, count: 0 })));
                 }}
                 className="mt-8 px-6 py-2.5 rounded-full bg-stone-900 text-stone-100 text-xs font-medium hover:bg-stone-800 transition-all"
               >
-                Отправить еще одну заявку
+                Оформить еще один заказ
               </button>
             </div>
           ) : (
             <div>
-              <div className="text-center max-w-lg mx-auto mb-10">
+              <div className="text-center max-w-lg mx-auto mb-8 sm:mb-10">
                 <span className="text-xs font-semibold uppercase tracking-widest text-amber-800">
                   прямая связь с мастерской
                 </span>
@@ -210,64 +244,140 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                   Оформить заказ или задать вопрос
                 </h2>
                 <p className="mt-3 text-stone-600 text-xs sm:text-sm">
-                  Менеджер перезвонит для подтверждения. Никакой оплаты на сайте — платите при получении курьеру или на Короля, 9.
+                  Менеджер перезвонит для подтверждения. Никакой предоплаты — оплачиваете при получении.
                 </p>
               </div>
 
               {status === "error" && (
-                <div className="mb-8 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm flex items-start gap-3">
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600 mt-0.5" />
                   <div>
                     <p className="font-medium">Не удалось отправить заявку</p>
                     <p className="mt-1 text-red-700">{errorMessage}</p>
                     <p className="mt-2 text-stone-700">
-                      Позвоните нам:{" "}
-                      <a href="tel:+375291234567" className="underline font-semibold text-stone-900">
-                        +375 (29) 123-45-67
-                      </a>{" "}
-                      или напишите в Telegram.
+                      Позвоните нам: <a href="tel:+375291234567" className="underline font-semibold text-stone-900">+375 (29) 123-45-67</a>
                     </p>
                   </div>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                
-                {/* 1. Что интересует */}
+      
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
-                    Что вас интересует?
+                    Тип обращения:
                   </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     {[
-                      { id: "subscription", label: "Подписка (54 BYN/мес)" },
                       { id: "single", label: "Разовый заказ зерна" },
+                      { id: "subscription", label: "Подписка (54 BYN/мес)" },
                       { id: "question", label: "Вопрос / Консультация" },
-                    ].map((item) => (
-                      <label
-                        key={item.id}
-                        className={`flex items-center justify-center p-3 rounded-xl border text-xs font-medium cursor-pointer transition-all text-center ${
-                          interest.includes(item.id) || interest === item.id
-                            ? "bg-stone-900 text-stone-100 border-stone-900 shadow-sm"
+                    ].map((tab) => (
+                      <button
+                        type="button"
+                        key={tab.id}
+                        onClick={() => setInterestType(tab.id as any)}
+                        className={`p-3 rounded-xl border text-xs font-medium transition-all ${
+                          interestType === tab.id
+                            ? "bg-stone-900 text-white border-stone-900 shadow-sm"
                             : "bg-[#FBF9F5] text-stone-700 border-stone-200 hover:border-stone-400"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name="interest"
-                          value={item.id}
-                          checked={interest.includes(item.id) || interest === item.id}
-                          onChange={(e) => setInterest(e.target.value)}
-                          className="sr-only"
-                        />
-                        <span>{item.label}</span>
-                      </label>
+                        {tab.label}
+                      </button>
                     ))}
                   </div>
                 </div>
 
-                {/* 2. Имя и Телефон */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {interestType === "single" && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FBF9F5] border border-stone-200/80 space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-stone-600">
+                        Выберите сорта и количество:
+                      </span>
+                      <span className="text-xs text-stone-500">
+                        Выбрано пачек: <strong>{totalCount}</strong>
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {items.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-stone-200/60"
+                        >
+                          <div>
+                            <p className="text-xs sm:text-sm font-medium text-stone-900">
+                              {item.name}
+                            </p>
+                            <p className="text-[11px] text-stone-500">
+                              {item.weight} · {item.price} BYN
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => updateCount(item.id, -1)}
+                              disabled={item.count === 0}
+                              className="w-7 h-7 rounded-lg bg-stone-100 disabled:opacity-30 hover:bg-stone-200 flex items-center justify-center text-stone-800 transition-colors"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="w-5 text-center text-xs sm:text-sm font-semibold text-stone-900">
+                              {item.count}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateCount(item.id, 1)}
+                              className="w-7 h-7 rounded-lg bg-stone-900 text-white hover:bg-stone-800 flex items-center justify-center transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-3 border-t border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs text-stone-500">Итого к оплате:</span>
+                        <p className="font-serif text-2xl font-bold text-stone-900">
+                          {totalPrice} BYN
+                        </p>
+                      </div>
+
+                      <div className="text-xs">
+                        {totalPrice >= 50 ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                            ✓ Бесплатная доставка по Минску
+                          </span>
+                        ) : totalPrice > 0 ? (
+                          <span className="text-stone-500">
+                            До бесплатной доставки: <strong>{50 - totalPrice} BYN</strong> (или самовывоз)
+                          </span>
+                        ) : (
+                          <span className="text-amber-800 font-medium">
+                            Добавьте хотя бы 1 пачку
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {interestType === "subscription" && (
+                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs sm:text-sm text-amber-950 flex items-start gap-3">
+                    <div>
+                      <p className="font-semibold">Тариф «Подписка на кофе» — 54 BYN в месяц</p>
+                      <p className="mt-1 text-stone-600 text-xs">
+                        Включает 2 свежие пачки по 250 г раз в месяц и бесплатную доставку курьером до двери каждую пятницу.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="name" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
                       Ваше имя <span className="text-amber-800">*</span>
@@ -307,15 +417,14 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                   </div>
                 </div>
 
-                {/* 3. Комментарий */}
                 <div>
                   <label htmlFor="comment" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                    Комментарий или пожелания
+                    Комментарий, адрес или пожелания по помолу
                   </label>
                   <textarea
                     id="comment"
-                    rows={3}
-                    placeholder="Например: помолоть под гейзер, доставка в пятницу после 14:00..."
+                    rows={2}
+                    placeholder="Например: Минск, ул. Немига 5, кв 12. Помол под воронку..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-[#FBF9F5] border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 focus:bg-white transition-all"
@@ -342,7 +451,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                 </button>
 
                 <p className="text-center text-[11px] text-stone-400">
-                  Менеджер свяжется для подтверждения. Никакого спама.
+                  Менеджер перезвонит для согласования времени. Оплата при получении.
                 </p>
 
               </form>
@@ -350,7 +459,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
           )}
 
         </div>
-
       </div>
     </section>
   );

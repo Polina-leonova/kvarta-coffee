@@ -77,13 +77,17 @@ export default function Subscription({ onSelectSubscription }: SubscriptionProps
                 </div>
               </div>
 
-              <a
-                href="#order"
-                onClick={onSelectSubscription}
-                className="w-full inline-flex justify-center items-center py-4 rounded-full bg-amber-600 hover:bg-amber-500 text-white font-medium text-sm transition-all shadow-md active:scale-98"
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectSubscription?.();
+                  const orderEl = document.getElementById("order");
+                  orderEl?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="w-full inline-flex justify-center items-center py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-semibold text-sm transition-all shadow-md active:scale-95"
               >
                 Оформить подписку
-              </a>
+              </button>
 
               <p className="mt-4 text-center text-[11px] text-stone-400">
                 Без предоплаты на сайте. Менеджер свяжется для уточнения деталей.
