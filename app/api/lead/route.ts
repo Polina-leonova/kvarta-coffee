@@ -1,6 +1,47 @@
 import { NextResponse } from "next/server";
 import { supabase } from "../../../lib/supabase";
 
+async function sendTelegramNotification(lead: {
+  name: string;
+  phone: string;
+  interest: string;
+  comment?: string | null;
+  utm?: any;
+}) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  if (!token || !chatId) {
+    return; 
+  }
+
+  const message = [
+    `☕ *Новая заявка — Обжарка «Кварта»*`,
+    ``,
+    `👤 *Имя:* ${lead.name}`,
+    `📞 *Телефон:* \`${lead.phone}\``,
+    `📦 *Заказ:* ${lead.interest}`,
+    lead.comment ? `💬 *Комментарий:* ${lead.comment}` : null,
+    lead.utm?.utm_source ? `🎯 *Реклама (UTM):* ${lead.utm.utm_source} / ${lead.utm.utm_campaign || "direct"}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown",
+      }),
+    });
+  } catch (err) {
+    console.error("Ошибка отправки в Telegram:", err);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -21,7 +62,6 @@ export async function POST(request: Request) {
     }
 
     const digitsOnly = phone.replace(/\D/g, "");
-
     if (digitsOnly.length !== 12 || !digitsOnly.startsWith("375")) {
       return NextResponse.json(
         { error: "Неверный формат белорусского номера" },
@@ -51,7 +91,6 @@ export async function POST(request: Request) {
     }
 
     if (recentLeads && recentLeads.length > 0) {
-      console.log(`[DEDUPLICATION] Блокирован дубль для номера: ${phone}`);
       return NextResponse.json({
         success: true,
         deduplicated: true,
@@ -79,6 +118,14 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    await sendTelegramNotification({
+      name: name.trim(),
+      phone: phone.trim(),
+      interest,
+      comment,
+      utm,
+    });
 
     return NextResponse.json({
       success: true,
