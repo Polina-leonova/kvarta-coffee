@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { getUtmParams, UtmParams } from "../lib/utm";
-import { CheckCircle2, AlertCircle, Loader2, Send, Plus, Minus, Coffee, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertCircle, Loader2, Send, Plus, Minus, Sparkles, PhoneCall } from "lucide-react";
 
 interface OrderFormProps {
   initialInterest?: string;
@@ -36,6 +36,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
 
   const [phoneError, setPhoneError] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [isDeduplicated, setIsDeduplicated] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const phoneInputRef = useRef<HTMLInputElement>(null);
@@ -195,6 +196,13 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
         throw new Error(result.error || "Не удалось отправить заявку");
       }
 
+      // Проверяем, вернул ли бэкенд флаг повторной отправки (10 минут)
+      if (result.deduplicated) {
+        setIsDeduplicated(true);
+      } else {
+        setIsDeduplicated(false);
+      }
+
       setStatus("success");
     } catch (err: any) {
       setStatus("error");
@@ -211,28 +219,69 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
           
           {status === "success" ? (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h3 className="font-serif text-3xl text-stone-900 font-normal">
-                Заявка принята!
-              </h3>
-              <p className="mt-3 text-stone-600 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-                Спасибо, {name}! Мы перезвоним вам в течение часа в рабочее время (8:00–20:00), чтобы согласовать детали доставки.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setStatus("idle");
-                  setName("");
-                  setPhone("+375 ");
-                  setComment("");
-                  setItems(AVAILABLE_ITEMS.map((item) => ({ ...item, count: 0 })));
-                }}
-                className="mt-8 px-6 py-2.5 rounded-full bg-stone-900 text-stone-100 text-xs font-medium hover:bg-stone-800 transition-all"
-              >
-                Оформить еще один заказ
-              </button>
+              {isDeduplicated ? (
+                /* Сценарий дедупликации: заявка уже поступала за последние 10 минут */
+                <div>
+                  <div className="w-16 h-16 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-200">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-serif text-2xl sm:text-3xl text-stone-900 font-normal">
+                    Мы уже приняли вашу заявку!
+                  </h3>
+                  <p className="mt-3 text-stone-600 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
+                    Заявка с номера <span className="font-semibold text-stone-900">{phone}</span> уже поступила к нам пару минут назад.
+                  </p>
+                  <p className="mt-2 text-stone-500 text-xs sm:text-sm max-w-md mx-auto">
+                    Если вы хотите изменить заказ или добавить ещё пачку — не переживайте, просто скажите об этом бариста, когда он позвонит для подтверждения.
+                  </p>
+                  
+                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatus("idle");
+                        setIsDeduplicated(false);
+                      }}
+                      className="px-6 py-2.5 rounded-full bg-stone-900 text-stone-100 text-xs font-medium hover:bg-stone-800 transition-all"
+                    >
+                      Понятно, спасибо
+                    </button>
+                    <a
+                      href="tel:+375291234567"
+                      className="px-6 py-2.5 rounded-full bg-stone-100 text-stone-800 border border-stone-200 text-xs font-medium hover:bg-stone-200 transition-all inline-flex items-center gap-1.5"
+                    >
+                      <PhoneCall className="w-3.5 h-3.5" />
+                      <span>Позвонить в мастерскую</span>
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                /* Сценарий первого успешного заказа */
+                <div>
+                  <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-serif text-3xl text-stone-900 font-normal">
+                    Заявка принята!
+                  </h3>
+                  <p className="mt-3 text-stone-600 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
+                    Спасибо, {name}! Мы перезвоним вам в течение часа в рабочее время (8:00–20:00), чтобы согласовать детали доставки.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatus("idle");
+                      setName("");
+                      setPhone("+375 ");
+                      setComment("");
+                      setItems(AVAILABLE_ITEMS.map((item) => ({ ...item, count: 0 })));
+                    }}
+                    className="mt-8 px-6 py-2.5 rounded-full bg-stone-900 text-stone-100 text-xs font-medium hover:bg-stone-800 transition-all"
+                  >
+                    Оформить еще один заказ
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div>
@@ -368,6 +417,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
 
                 {interestType === "subscription" && (
                   <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs sm:text-sm text-amber-950 flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">Тариф «Подписка на кофе» — 54 BYN в месяц</p>
                       <p className="mt-1 text-stone-600 text-xs">
@@ -431,7 +481,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                   />
                 </div>
 
-                {/* Кнопка отправки */}
                 <button
                   type="submit"
                   disabled={status === "loading"}

@@ -40,19 +40,18 @@ export async function POST(request: Request) {
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
 
-    const { data: recentLead, error: checkError } = await supabase
+    const { data: recentLeads, error: checkError } = await supabase
       .from("leads")
-      .select("id, created_at")
-      .eq("phone", phone)
-      .gte("created_at", tenMinutesAgo)
-      .limit(1)
-      .maybeSingle();
+      .select("id")
+      .eq("phone", phone.trim())
+      .gte("created_at", tenMinutesAgo);
 
     if (checkError) {
-      console.error("Deduplication error:", checkError);
+      console.error("Deduplication check error:", checkError);
     }
 
-    if (recentLead) {
+    if (recentLeads && recentLeads.length > 0) {
+      console.log(`[DEDUPLICATION] Блокирован дубль для номера: ${phone}`);
       return NextResponse.json({
         success: true,
         deduplicated: true,
