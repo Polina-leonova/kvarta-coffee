@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     title: "Кварта — микрообжарка кофе в Минске",
     description:
       "Обжариваем по четвергам партиями по 5 кг. Доставка по пятницам. Зерно на 1–3 день у вас дома.",
-    url: "https://kvarta-coffee.vercel.app", // замениьб на реальный URL после деплоя
+    url: "https://kvarta-coffee-silk.vercel.app/", 
     siteName: "Обжарка «Кварта»",
     locale: "ru_BY",
     type: "website",

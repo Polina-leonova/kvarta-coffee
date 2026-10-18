@@ -96,6 +96,33 @@ export default function LocationDelivery() {
           </div>
 
         </div>
+        
+        {/* Интерактивная карта мастерской с точными координатами Короля, 9 */}
+        <div className="mt-8 rounded-2xl overflow-hidden border border-stone-200 shadow-sm bg-stone-100">
+          <div className="p-4 bg-white border-b border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <span className="font-medium text-stone-800">
+              Мастерская «Кварта»: Минск, ул. Короля, 9 (самовывоз)
+            </span>
+            <a
+              href="https://yandex.by/maps/?text=Минск+улица+Короля+9"
+              target="_blank"
+              rel="noreferrer"
+              className="text-amber-800 hover:text-amber-900 font-semibold underline"
+            >
+              Открыть маршрут в Яндекс.Картах ↗
+            </a>
+          </div>
+          <div className="w-full h-64 sm:h-80 grayscale contrast-125 opacity-90 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+            <iframe
+              src="https://yandex.ru/map-widget/v1/?ll=27.542023%2C53.902241&z=17&pt=27.542023,53.902241,pm2rdm"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              allowFullScreen={true}
+              title="Мастерская Кварта на Короля, 9"
+            />
+          </div>
+        </div>
 
       </div>
     </section>

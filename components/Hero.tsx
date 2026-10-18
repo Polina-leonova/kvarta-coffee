@@ -1,16 +1,13 @@
 import Image from "next/image";
-import { Sparkles, ArrowDown } from "lucide-react";
+import RoastTimer from "./RoastTimer";
 
 export default function Hero() {
   return (
     <section className="relative pt-8 pb-16 sm:pt-14 sm:pb-24 border-b border-stone-200/60 overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
-        {/* Верхний бейдж ритма */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 text-amber-900 text-xs sm:text-sm font-medium mb-6 animate-fade-in">
-          <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
-          <span>Жарим по четвергам · Развозим по пятницам</span>
-        </div>
+        {/* Динамический бейдж с таймером до четверга */}
+        <RoastTimer />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           

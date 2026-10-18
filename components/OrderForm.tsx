@@ -23,10 +23,20 @@ const AVAILABLE_ITEMS: Omit<CartItem, "count">[] = [
   { id: "drips", name: "Дрип-пакеты (Ассорти)", price: 18, weight: "10 шт" },
 ];
 
+const GRIND_OPTIONS = [
+  { id: "beans", label: "В зёрнах (не молоть)" },
+  { id: "turka", label: "Для турки" },
+  { id: "espresso", label: "Для эспрессо" },
+  { id: "moka", label: "Для гейзера" },
+  { id: "filter", label: "Для фильтра / воронки" },
+  { id: "cup", label: "Для чашки" },
+];
+
 export default function OrderForm({ initialInterest = "single" }: OrderFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+375 ");
   const [interestType, setInterestType] = useState<"single" | "subscription" | "question">("single");
+  const [grindType, setGrindType] = useState<string>("beans");
   const [comment, setComment] = useState("");
   const [utm, setUtm] = useState<UtmParams>({});
 
@@ -170,7 +180,8 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
         .filter((i) => i.count > 0)
         .map((i) => `${i.name} (${i.count} шт.)`)
         .join(", ");
-      orderSummary = `Разовый заказ: ${selectedList}. Итого: ${totalPrice} BYN`;
+      const selectedGrind = GRIND_OPTIONS.find((g) => g.id === grindType)?.label || "В зёрнах";
+      orderSummary = `Разовый заказ: ${selectedList}. Помол: ${selectedGrind}. Итого: ${totalPrice} BYN`;
     } else if (interestType === "subscription") {
       orderSummary = "Подписка на кофе: 2 пачки в месяц (54 BYN/мес)";
     } else {
@@ -196,7 +207,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
         throw new Error(result.error || "Не удалось отправить заявку");
       }
 
-      // Проверяем, вернул ли бэкенд флаг повторной отправки (10 минут)
       if (result.deduplicated) {
         setIsDeduplicated(true);
       } else {
@@ -220,7 +230,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
           {status === "success" ? (
             <div className="text-center py-8">
               {isDeduplicated ? (
-                /* Сценарий дедупликации: заявка уже поступала за последние 10 минут */
                 <div>
                   <div className="w-16 h-16 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-200">
                     <AlertCircle className="w-8 h-8" />
@@ -256,7 +265,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                   </div>
                 </div>
               ) : (
-                /* Сценарий первого успешного заказа */
                 <div>
                   <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-200">
                     <CheckCircle2 className="w-8 h-8" />
@@ -339,7 +347,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                 </div>
 
                 {interestType === "single" && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FBF9F5] border border-stone-200/80 space-y-3">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#FBF9F5] border border-stone-200/80 space-y-4">
                     <div className="flex items-center justify-between pb-2 border-b border-stone-200">
                       <span className="text-xs font-semibold uppercase tracking-wider text-stone-600">
                         Выберите сорта и количество:
@@ -386,6 +394,35 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                           </div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Выбор помола: ровная эстетичная сетка */}
+                    <div className="pt-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider">
+                          Помол (бесплатно)
+                        </label>
+                        <span className="text-[11px] text-stone-400">
+                          настроим под ваш девайс
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {GRIND_OPTIONS.map((opt) => (
+                          <button
+                            type="button"
+                            key={opt.id}
+                            onClick={() => setGrindType(opt.id)}
+                            className={`py-2 px-3 rounded-xl text-xs font-medium border text-center transition-all ${
+                              grindType === opt.id
+                                ? "bg-stone-900 text-stone-50 border-stone-900 shadow-sm"
+                                : "bg-white text-stone-700 border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="pt-3 border-t border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -469,12 +506,12 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
 
                 <div>
                   <label htmlFor="comment" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                    Комментарий, адрес или пожелания по помолу
+                    Комментарий или адрес доставки
                   </label>
                   <textarea
                     id="comment"
                     rows={2}
-                    placeholder="Например: Минск, ул. Немига 5, кв 12. Помол под воронку..."
+                    placeholder="Например: Минск, ул. Немига 5, кв 12. Доставка после 15:00..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-[#FBF9F5] border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 focus:bg-white transition-all"
