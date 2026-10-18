@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Обжарка кофе «Кварта» (Минск) · Тестовое задание
 
-## Getting Started
+* **Живой сайт:** [https://kvarta-coffee-silk.vercel.app](https://kvarta-coffee-silk.vercel.app)
+* **Стек:** Next.js 15 (App Router), TypeScript, Tailwind CSS, Supabase (PostgreSQL), Telegram Bot API.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 1. Выбор архитектуры и хранилища заявок
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Для хранения лидов выбран **Supabase (облачный PostgreSQL)**:
+* Так как проект развернут на serverless-платформе Vercel, локальная файловая система эфемерна (`read-only`), и сохранять заявки в локальный `.json` или SQLite-файл нельзя — данные стирались бы при перезапуске функций.
+* Supabase обеспечивает строгую реляционную модель, персистентность данных, поддержку индексов и готовую панель управления заказами для менеджера.
+* Для защиты от повторных заявок (10-минутный лимит) создан композитный индекс `(phone, created_at desc)`, что позволяет бэкенду мгновенно проверять дубли без сканирования всей таблицы.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Что делал ИИ, а что делалось самостоятельно
 
-## Learn More
+* **Что делегировалось ИИ:** 
+  * Начальная генерация каркаса компонентов и серверных роутов.
+  * Формирование SQL-схемы таблицы и базовых интерфейсов TypeScript.
+  * Первичные структуры регулярных выражений для белорусских номеров телефонов.
 
-To learn more about Next.js, take a look at the following resources:
+* **Что делалось и контролировалось лично:**
+  * **Визуальный стиль и дизайн-код:** ИИ изначально пытался сгенерировать шаблонный лендинг с летающими чашками и темным глянцем. Я полностью пресекла этот паттерн, подобрала референсы скандинавских микро-обжарок (*Harth Coffee*, *Brewlly*) и настояла на теплой журнальной типографике (антиква *Lora* + гротеск *Inter*) и естественной палитре небеленой бумаги (`#FBF9F5`).
+  * **Продуктовая логика воронки:** Связала кнопки каталога и подписки с формой, добавила интерактивный калькулятор заказа (подсчет суммы в BYN, динамический расчет бесплатной доставки от 50 BYN) и выбор помола под конкретные девайсы.
+  * **Аналитика:** Настроила сквозной захват UTM-меток из URL рекламы и их передачу в базу и Telegram-бот.
+  * **UX дедупликации:** Вместо "молчаливого" отсечения дублей добавила понятное человечное состояние: если покупатель отправляет заказ повторно в течение 10 минут, интерфейс объясняет, что заявка уже у бариста, и предлагает позвонить при необходимости срочных правок.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Где ошибся ИИ и как это было локализовано
 
-## Deploy on Vercel
+1. **Нестабильная версия стилей:** ИИ инициализировал проект с Tailwind CSS v4, который не резолвил пути в папке `components`. Я заметила поломку стилей на первом рендере и оперативно перевела проект на надежный Tailwind v3 с явным конфигом сканирования.
+2. **Серверные компоненты (RSC):** При добавлении `onClick` в каталог Turbopack выбросил ошибку `Event handlers cannot be passed to Client Component props`. Я локализовала проблему и перевела интерактивные блоки в клиентский контекст через `"use client"`.
+3. **Критический баг каретки в маске телефона:** При редактировании цифры в середине номера курсор выбрасывало в самый конец инпута. Проблема была выявлена при ручном тестировании. Исправлено сохранением смещения значащих цифр через `useLayoutEffect` и `useRef`.
+4. **Пропуск дублей из-за RLS в Supabase:** Включенные политики безопасности возвращали пустой ответ при проверке дублей по публичному ключу. По логам бэкенда я увидела дублирование строк и написала корректную политику `SELECT` для дедупликации.
+5. **Нерелевантный визуал и шаблонные маркеры:** ИИ предложил стоковые эмодзи и фотографии чашек в форме сердечек. Я заменила их на сдержанные акцентные маркеры и аутентичную фотографию в теплых тонах, а также выставила точнейшие координаты дома ул. Короля, 9 на Яндекс.Картах.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Что не успели или сделали бы иначе при большем запасе времени
+
+* Добавила бы полноценную админ-панель для бариста со сменой статусов заказов (`новый` -> `обжарен` -> `передан курьеру`) в реальном времени через Supabase Realtime.
+* Реализовала бы автоматическую отправку SMS клиенту с подтверждением номера через белорусский SMS-шлюз.
+* Вынесла бы каталог сортов в базу данных (сейчас товары заведены статически в коде) для редактирования цен без передеплоя.
+
+---
+
+### 5. Аудит производительности (Mobile Lighthouse)
+
+По результатам официального аудита Google PageSpeed Insights для мобильных устройств:
+* **Performance:** 95 / 100
+* **Accessibility:** 91 / 100
+* **Best Practices:** 100 / 100
+* **SEO:** 100 / 100
+
+*(Скриншот замера приложен к отправке задания).*
