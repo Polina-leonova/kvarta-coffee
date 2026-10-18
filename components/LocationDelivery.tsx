@@ -101,7 +101,7 @@ export default function LocationDelivery() {
             <a
               href="https://yandex.by/maps/?text=Минск+улица+Короля+9"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="text-amber-800 hover:text-amber-900 font-semibold underline"
             >
               Открыть маршрут в Яндекс.Картах ↗
@@ -115,6 +115,7 @@ export default function LocationDelivery() {
               height="100%"
               frameBorder="0"
               allowFullScreen={true}
+              loading="lazy"
               title="Мастерская Кварта на Короля, 9"
             />
           </div>
