@@ -4,8 +4,7 @@ export default function LocationDelivery() {
   return (
     <section id="contacts" className="py-16 sm:py-24 border-b border-stone-200/60 bg-[#FBF9F5]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        
-        {/* Заголовок */}
+    
         <div className="max-w-2xl mb-12">
           <span className="text-xs font-semibold uppercase tracking-widest text-amber-800">
             где забрать и как получить
@@ -18,10 +17,8 @@ export default function LocationDelivery() {
           </p>
         </div>
 
-        {/* 2 колонки: Самовывоз vs Доставка */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
-          {/* Колонка 1: Мастерская */}
           <div className="p-8 rounded-2xl bg-white border border-stone-200 shadow-sm flex flex-col justify-between">
             <div>
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center mb-6">
@@ -56,7 +53,6 @@ export default function LocationDelivery() {
             </div>
           </div>
 
-          {/* Колонка 2: Доставка курьером */}
           <div className="p-8 rounded-2xl bg-white border border-stone-200 shadow-sm flex flex-col justify-between">
             <div>
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-800 flex items-center justify-center mb-6">
@@ -97,8 +93,7 @@ export default function LocationDelivery() {
 
         </div>
         
-        {/* Интерактивная карта мастерской с точными координатами Короля, 9 */}
-        <div className="mt-8 rounded-2xl overflow-hidden border border-stone-200 shadow-sm bg-stone-100">
+        <div className="mt-8 rounded-2xl overflow-hidden border border-stone-200 shadow-sm bg-white">
           <div className="p-4 bg-white border-b border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <span className="font-medium text-stone-800">
               Мастерская «Кварта»: Минск, ул. Короля, 9 (самовывоз)
@@ -112,7 +107,8 @@ export default function LocationDelivery() {
               Открыть маршрут в Яндекс.Картах ↗
             </a>
           </div>
-          <div className="w-full h-64 sm:h-80 grayscale contrast-125 opacity-90 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+          
+          <div className="w-full h-64 sm:h-80">
             <iframe
               src="https://yandex.ru/map-widget/v1/?ll=27.542023%2C53.902241&z=17&pt=27.542023,53.902241,pm2rdm"
               width="100%"

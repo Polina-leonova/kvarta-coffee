@@ -44,6 +44,7 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
     AVAILABLE_ITEMS.map((item) => ({ ...item, count: 0 }))
   );
 
+  const [nameError, setNameError] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [isDeduplicated, setIsDeduplicated] = useState(false);
@@ -159,9 +160,12 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    
     if (!name.trim()) {
-      alert("Пожалуйста, укажите имя");
-      return;
+    setNameError("Пожалуйста, укажите ваше имя");
+    return;
+    } else {
+    setNameError("");
     }
 
     if (!validatePhone(phone)) return;
@@ -396,7 +400,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                       ))}
                     </div>
 
-                    {/* Выбор помола: ровная эстетичная сетка */}
                     <div className="pt-2">
                       <div className="flex items-center justify-between mb-2">
                         <label className="block text-[11px] font-semibold text-stone-600 uppercase tracking-wider">
@@ -466,19 +469,28 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="name" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
-                      Ваше имя <span className="text-amber-800">*</span>
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      required
-                      placeholder="Алексей"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-[#FBF9F5] border border-stone-200 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 focus:bg-white transition-all"
-                    />
-                  </div>
+                 <label htmlFor="name" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
+                   Ваше имя <span className="text-amber-800">*</span>
+                 </label>
+                 <input
+                   id="name"
+                   type="text"
+                   placeholder="Алексей"
+                   value={name}
+                   onChange={(e) => {
+                     setName(e.target.value);
+                     if (e.target.value.trim()) setNameError("");
+                   }}
+                   className={`w-full px-4 py-3 rounded-xl bg-[#FBF9F5] border text-stone-900 text-sm focus:outline-none focus:ring-2 transition-all ${
+                     nameError
+                       ? "border-red-400 focus:ring-red-400"
+                       : "border-stone-200 focus:ring-stone-900 focus:bg-white"
+                   }`}
+                 />
+                 {nameError && (
+                   <p className="mt-1.5 text-xs text-red-600">{nameError}</p>
+                 )}
+               </div>
 
                   <div>
                     <label htmlFor="phone" className="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-1.5">
@@ -488,7 +500,6 @@ export default function OrderForm({ initialInterest = "single" }: OrderFormProps
                       ref={phoneInputRef}
                       id="phone"
                       type="tel"
-                      required
                       placeholder="+375 (29) 000-00-00"
                       value={phone}
                       onChange={handlePhoneChange}

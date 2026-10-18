@@ -64,9 +64,10 @@ export const PRODUCTS: CoffeeItem[] = [
 
 interface CatalogProps {
   onSelectProduct?: (productName: string) => void;
+  onOpenQuiz?: () => void;
 }
 
-export default function Catalog({ onSelectProduct }: CatalogProps) {
+export default function Catalog({ onSelectProduct, onOpenQuiz }: CatalogProps) {
   return (
     <section id="catalog" className="py-16 sm:py-24 border-b border-stone-200/60">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -81,9 +82,17 @@ export default function Catalog({ onSelectProduct }: CatalogProps) {
               Свежее зерно этого четверга
             </h2>
           </div>
-          <p className="text-sm text-stone-500 max-w-xs">
-            Цены в белорусских рублях. Помол под ваш способ заваривания сделаем бесплатно.
-          </p>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <button
+              type="button"
+              onClick={onOpenQuiz}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-[#F4EFE6] hover:bg-[#eae3d5] text-stone-800 text-xs font-medium border border-stone-300 transition-all active:scale-95 shadow-sm"
+            >
+              <Coffee className="w-3.5 h-3.5 text-amber-800" />
+              <span>Подобрать сорт под себя (тест)</span>
+            </button>
+          </div>
         </div>
 
         {/* Сетка карточек */}

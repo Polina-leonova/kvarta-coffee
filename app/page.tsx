@@ -9,9 +9,11 @@ import Subscription from "../components/Subscription";
 import LocationDelivery from "../components/LocationDelivery";
 import OrderForm from "../components/OrderForm";
 import Footer from "../components/Footer";
+import CoffeeQuiz from "../components/CoffeeQuiz";
 
 export default function Home() {
   const [selectedInterest, setSelectedInterest] = useState<string>("single");
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
 
   const handleSelectProduct = (productName: string) => {
     setSelectedInterest(`single: ${productName}#${Date.now()}`);
@@ -27,12 +29,21 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <Freshness />
-        <Catalog onSelectProduct={handleSelectProduct} />
+        <Catalog
+          onSelectProduct={handleSelectProduct}
+          onOpenQuiz={() => setIsQuizOpen(true)}
+        />
         <Subscription onSelectSubscription={handleSelectSubscription} />
         <LocationDelivery />
         <OrderForm initialInterest={selectedInterest} />
       </main>
       <Footer />
+
+      <CoffeeQuiz
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        onSelectProduct={handleSelectProduct}
+      />
     </div>
   );
 }
