@@ -18,26 +18,17 @@ export const metadata: Metadata = {
   title: "Кварта — микрообжарка кофе в Минске",
   description:
     "Обжариваем по четвергам партиями по 5 кг. Свежее зерно приезжает к вам на 1–3 день после обжарки. Самовывоз на ул. Короля, 9.",
-  keywords: [
-    "кофе минск",
-    "обжарка кофе минск",
-    "свежий кофе",
-    "подписка на кофе минск",
-    "спешелти кофе",
-    "кварта кофе",
-  ],
-  authors: [{ name: "Аня и Дмитрий · Обжарка Кварта" }],
   openGraph: {
     title: "Кварта — микрообжарка кофе в Минске",
     description:
       "Обжариваем по четвергам партиями по 5 кг. Доставка по пятницам. Зерно на 1–3 день у вас дома.",
-    url: "https://kvarta-coffee-silk.vercel.app/", 
+    url: "https://kvarta-coffee-silk.vercel.app",
     siteName: "Обжарка «Кварта»",
     locale: "ru_BY",
     type: "website",
     images: [
       {
-        url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=1200&h=630",
+        url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&q=80&w=1200&h=630",
         width: 1200,
         height: 630,
         alt: "Кофейная мастерская «Кварта» в Минске",
@@ -49,7 +40,7 @@ export const metadata: Metadata = {
     title: "Кварта — кофе свежей обжарки в Минске",
     description: "Жарим по четвергам по 5 кг. Свежее зерно на 1–3 день.",
     images: [
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&q=80&w=1200&h=630",
+      "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&q=80&w=1200&h=630",
     ],
   },
 };
